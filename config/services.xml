@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services https://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+        <defaults autowire="true" autoconfigure="true" public="false" />
+
+        <!-- API Client -->
+        <service id="renrhaf_sylius_brevo.api.client"
+                 class="Renrhaf\SyliusBrevoPlugin\Api\BrevoClient">
+            <argument type="service" id="http_client" />
+            <argument type="service" id="logger" />
+            <argument>%renrhaf_sylius_brevo.api.key%</argument>
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Api\BrevoClientInterface"
+                 alias="renrhaf_sylius_brevo.api.client" />
+
+        <!-- Mappers -->
+        <service id="Renrhaf\SyliusBrevoPlugin\Mapper\ContactMapper">
+            <argument>%renrhaf_sylius_brevo.contacts.attribute_mapping%</argument>
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Mapper\ContactMapperInterface"
+                 alias="Renrhaf\SyliusBrevoPlugin\Mapper\ContactMapper" />
+
+        <service id="Renrhaf\SyliusBrevoPlugin\Mapper\ProductMapper">
+            <argument type="service" id="router" />
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Mapper\ProductMapperInterface"
+                 alias="Renrhaf\SyliusBrevoPlugin\Mapper\ProductMapper" />
+
+        <service id="Renrhaf\SyliusBrevoPlugin\Mapper\OrderMapper" />
+        <service id="Renrhaf\SyliusBrevoPlugin\Mapper\OrderMapperInterface"
+                 alias="Renrhaf\SyliusBrevoPlugin\Mapper\OrderMapper" />
+
+        <service id="Renrhaf\SyliusBrevoPlugin\Mapper\CategoryMapper">
+            <argument type="service" id="router" />
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Mapper\CategoryMapperInterface"
+                 alias="Renrhaf\SyliusBrevoPlugin\Mapper\CategoryMapper" />
+
+        <!-- Newsletter -->
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Newsletter\NewsletterService">
+            <argument type="service" id="renrhaf_sylius_brevo.api.client" />
+            <argument type="service" id="logger" />
+            <argument>%renrhaf_sylius_brevo.newsletter.list_id%</argument>
+            <argument>%renrhaf_sylius_brevo.newsletter.double_opt_in%</argument>
+            <argument>%renrhaf_sylius_brevo.newsletter.doi_template_id%</argument>
+            <argument>%renrhaf_sylius_brevo.newsletter.doi_redirect_url%</argument>
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Newsletter\NewsletterServiceInterface"
+                 alias="Renrhaf\SyliusBrevoPlugin\Service\Newsletter\NewsletterService" />
+
+        <!-- Contact Sync -->
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Contact\ContactSyncService">
+            <argument type="service" id="renrhaf_sylius_brevo.api.client" />
+            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Mapper\ContactMapperInterface" />
+            <argument type="service" id="sylius.repository.customer" />
+            <argument type="service" id="doctrine.orm.entity_manager" />
+            <argument type="service" id="logger" />
+            <argument>%renrhaf_sylius_brevo.newsletter.list_id%</argument>
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Contact\ContactSyncServiceInterface"
+                 alias="Renrhaf\SyliusBrevoPlugin\Service\Contact\ContactSyncService" />
+
+        <!-- Product Sync -->
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\ProductSyncService">
+            <argument type="service" id="renrhaf_sylius_brevo.api.client" />
+            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Mapper\ProductMapperInterface" />
+            <argument type="service" id="sylius.repository.product" />
+            <argument type="service" id="doctrine.orm.entity_manager" />
+            <argument type="service" id="logger" />
+            <argument>%locale%</argument>
+            <argument>TI_WEB</argument>
+            <argument>%renrhaf_sylius_brevo.ecommerce.products.batch_size%</argument>
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\ProductSyncServiceInterface"
+                 alias="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\ProductSyncService" />
+
+        <!-- Order Sync -->
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\OrderSyncService">
+            <argument type="service" id="renrhaf_sylius_brevo.api.client" />
+            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Mapper\OrderMapperInterface" />
+            <argument type="service" id="sylius.repository.order" />
+            <argument type="service" id="doctrine.orm.entity_manager" />
+            <argument type="service" id="logger" />
+            <argument>%renrhaf_sylius_brevo.ecommerce.orders.sync_statuses%</argument>
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\OrderSyncServiceInterface"
+                 alias="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\OrderSyncService" />
+
+        <!-- Category Sync -->
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CategorySyncService">
+            <argument type="service" id="renrhaf_sylius_brevo.api.client" />
+            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Mapper\CategoryMapperInterface" />
+            <argument type="service" id="sylius.repository.taxon" />
+            <argument type="service" id="doctrine.orm.entity_manager" />
+            <argument type="service" id="logger" />
+            <argument>%locale%</argument>
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CategorySyncServiceInterface"
+                 alias="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CategorySyncService" />
+
+        <!-- Cart Tracking -->
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CartTrackingService">
+            <argument type="service" id="renrhaf_sylius_brevo.api.client" />
+            <argument type="service" id="logger" />
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CartTrackingServiceInterface"
+                 alias="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CartTrackingService" />
+
+        <!-- Webhook Handlers -->
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Webhook\Handler\EmailEventHandler">
+            <argument type="service" id="doctrine.orm.entity_manager" />
+            <tag name="renrhaf_sylius_brevo.webhook_handler" />
+        </service>
+
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Webhook\Handler\UnsubscribeHandler">
+            <argument type="service" id="sylius.repository.customer" />
+            <argument type="service" id="doctrine.orm.entity_manager" />
+            <argument type="service" id="logger" />
+            <tag name="renrhaf_sylius_brevo.webhook_handler" />
+        </service>
+
+        <!-- Webhook Controller -->
+        <service id="Renrhaf\SyliusBrevoPlugin\Controller\Webhook\BrevoWebhookController" public="true">
+            <argument type="tagged_iterator" tag="renrhaf_sylius_brevo.webhook_handler" />
+            <argument type="service" id="logger" />
+            <argument>%renrhaf_sylius_brevo.webhook.secret%</argument>
+            <argument>%renrhaf_sylius_brevo.webhook.enabled%</argument>
+            <tag name="controller.service_arguments" />
+        </service>
+
+        <!-- Event Listeners -->
+        <service id="Renrhaf\SyliusBrevoPlugin\EventListener\CustomerSyncListener">
+            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Service\Contact\ContactSyncServiceInterface" />
+            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Service\Newsletter\NewsletterServiceInterface" />
+            <argument>%renrhaf_sylius_brevo.contacts.sync_on_create%</argument>
+            <argument>%renrhaf_sylius_brevo.contacts.sync_on_update%</argument>
+            <argument>%renrhaf_sylius_brevo.newsletter.enabled%</argument>
+        </service>
+
+        <service id="Renrhaf\SyliusBrevoPlugin\EventListener\OrderSyncListener">
+            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\OrderSyncServiceInterface" />
+            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CartTrackingServiceInterface" />
+            <argument type="service" id="logger" />
+            <argument>%renrhaf_sylius_brevo.ecommerce.orders.sync_enabled%</argument>
+            <argument>%renrhaf_sylius_brevo.ecommerce.cart_tracking.enabled%</argument>
+        </service>
+
+        <service id="Renrhaf\SyliusBrevoPlugin\EventListener\CartTrackingListener">
+            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CartTrackingServiceInterface" />
+            <argument type="service" id="logger" />
+            <argument>%renrhaf_sylius_brevo.ecommerce.cart_tracking.enabled%</argument>
+        </service>
+
+        <!-- Commands -->
+        <service id="Renrhaf\SyliusBrevoPlugin\Command\SyncProductsCommand">
+            <tag name="console.command" />
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Command\SyncOrdersCommand">
+            <tag name="console.command" />
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Command\SyncContactsCommand">
+            <tag name="console.command" />
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Command\SyncCategoriesCommand">
+            <tag name="console.command" />
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Command\DiagnoseCommand">
+            <argument type="service" id="renrhaf_sylius_brevo.api.client" />
+            <tag name="console.command" />
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Command\PurgeLogsCommand">
+            <argument type="service" id="doctrine.dbal.default_connection" />
+            <argument>%renrhaf_sylius_brevo.webhook.log_retention_days%</argument>
+            <tag name="console.command" />
+        </service>
+    </services>
+</container>

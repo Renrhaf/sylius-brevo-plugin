@@ -1,0 +1,26 @@
+renrhaf_sylius_brevo:
+    ui:
+        brevo: Brevo
+        dashboard: Dashboard
+        email_logs: Email Logs
+        sync_logs: Sync Logs
+        connection_status: Connection Status
+        connected: Connected
+        disconnected: Disconnected
+        sync_products: Sync Products
+        sync_orders: Sync Orders
+        sync_contacts: Sync Contacts
+        sync_categories: Sync Categories
+        last_sync: Last Sync
+        items_processed: Items Processed
+        items_failed: Items Failed
+        email: Email
+        subject: Subject
+        status: Status
+        type: Type
+        sent: Sent
+        delivered: Delivered
+        opened: Opened
+        clicked: Clicked
+        bounced: Bounced
+        created_at: Created At

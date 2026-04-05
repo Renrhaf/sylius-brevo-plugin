@@ -1,0 +1,4 @@
+renrhaf_sylius_brevo_webhook:
+    path: /webhook/brevo
+    controller: Renrhaf\SyliusBrevoPlugin\Controller\Webhook\BrevoWebhookController
+    methods: [POST]
