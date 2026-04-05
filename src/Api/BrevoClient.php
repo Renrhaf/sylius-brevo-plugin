@@ -166,6 +166,38 @@ final class BrevoClient implements BrevoClientInterface
         $this->request('POST', '/events', $body);
     }
 
+    // --- Transactional Email ---
+
+    public function sendTransactionalEmail(int $templateId, array $to, array $params = [], ?array $sender = null): void
+    {
+        $body = [
+            'templateId' => $templateId,
+            'to' => $to,
+        ];
+
+        if ([] !== $params) {
+            $body['params'] = $params;
+        }
+
+        if (null !== $sender) {
+            $body['sender'] = $sender;
+        }
+
+        $this->request('POST', '/smtp/email', $body);
+    }
+
+    // --- SMS ---
+
+    public function sendTransactionalSms(string $sender, string $recipient, string $content): void
+    {
+        $this->request('POST', '/transactionalSMS/sms', [
+            'sender' => $sender,
+            'recipient' => $recipient,
+            'content' => $content,
+            'type' => 'transactional',
+        ]);
+    }
+
     // --- Internal ---
 
     /**

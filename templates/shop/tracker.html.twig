@@ -1,0 +1,43 @@
+{# Brevo JavaScript Tracker — inject in shop base footer #}
+{% if brevo_tracker_enabled and brevo_client_key %}
+<script type="text/javascript">
+    (function() {
+        window.sib = {
+            equeue: [],
+            client_key: "{{ brevo_client_key }}"
+        };
+        window.sendinblue = {};
+        for (var j = ['track', 'identify', 'trackLink', 'page'], i = 0; i < j.length; i++) {
+            (function(k) {
+                window.sendinblue[k] = function() {
+                    var arg = Array.prototype.slice.call(arguments);
+                    (window.sib[k] || function() {
+                        var t = {};
+                        t[k] = arg;
+                        window.sib.equeue.push(t);
+                    })(arg[0], arg[1], arg[2], arg[3]);
+                };
+            })(j[i]);
+        }
+        var n = document.createElement("script"),
+            i = document.getElementsByTagName("script")[0];
+        n.type = "text/javascript";
+        n.id = "sendinblue-js";
+        n.async = true;
+        n.src = "https://sibautomation.com/sa.js?key=" + window.sib.client_key;
+        i.parentNode.insertBefore(n, i);
+
+        {# Identify logged-in user for personalization and abandonment tracking #}
+        {% if app.user is defined and app.user and app.user.customer is defined %}
+            {% set customer = app.user.customer %}
+            sendinblue.identify({
+                email: "{{ customer.email|e('js') }}"
+                {% if customer.firstName %}, FIRSTNAME: "{{ customer.firstName|e('js') }}"{% endif %}
+                {% if customer.lastName %}, LASTNAME: "{{ customer.lastName|e('js') }}"{% endif %}
+            });
+        {% endif %}
+
+        sendinblue.page();
+    })();
+</script>
+{% endif %}

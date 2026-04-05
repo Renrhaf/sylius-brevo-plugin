@@ -58,4 +58,15 @@ interface BrevoClientInterface
     // --- Events ---
     /** @param array<string, mixed> $eventData */
     public function trackEvent(string $eventName, string $email, array $eventData = []): void;
+
+    // --- Transactional Email ---
+    /**
+     * @param array<int, array{email: string, name?: string}> $to
+     * @param array<string, mixed> $params
+     * @param array{name: string, email: string}|null $sender
+     */
+    public function sendTransactionalEmail(int $templateId, array $to, array $params = [], ?array $sender = null): void;
+
+    // --- SMS ---
+    public function sendTransactionalSms(string $sender, string $recipient, string $content): void;
 }

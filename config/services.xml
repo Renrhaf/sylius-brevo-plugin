@@ -193,6 +193,71 @@
             <argument>%renrhaf_sylius_brevo.ecommerce.cart_tracking.enabled%</argument>
         </service>
 
+        <service id="Renrhaf\SyliusBrevoPlugin\EventListener\TransactionalEmailListener">
+            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Service\Email\TransactionalEmailServiceInterface" />
+            <argument>%renrhaf_sylius_brevo.transactional_email.enabled%</argument>
+        </service>
+
+        <service id="Renrhaf\SyliusBrevoPlugin\EventListener\SmsNotificationListener">
+            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Service\Sms\SmsServiceInterface" />
+            <argument>%renrhaf_sylius_brevo.sms.enabled%</argument>
+        </service>
+
+        <service id="Renrhaf\SyliusBrevoPlugin\EventListener\CheckoutNewsletterListener">
+            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Service\Newsletter\NewsletterServiceInterface" />
+            <argument type="service" id="logger" />
+            <argument>%renrhaf_sylius_brevo.newsletter.checkout_subscribe%</argument>
+        </service>
+
+        <!-- Transactional Email Service -->
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Email\TransactionalEmailService">
+            <argument type="service" id="renrhaf_sylius_brevo.api.client" />
+            <argument type="service" id="logger" />
+            <argument>%renrhaf_sylius_brevo.transactional_email.enabled%</argument>
+            <argument>%renrhaf_sylius_brevo.transactional_email.sender.name%</argument>
+            <argument>%renrhaf_sylius_brevo.transactional_email.sender.email%</argument>
+            <argument>%renrhaf_sylius_brevo.transactional_email.templates%</argument>
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Email\TransactionalEmailServiceInterface"
+                 alias="Renrhaf\SyliusBrevoPlugin\Service\Email\TransactionalEmailService" />
+
+        <!-- SMS Service -->
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Sms\SmsService">
+            <argument type="service" id="renrhaf_sylius_brevo.api.client" />
+            <argument type="service" id="logger" />
+            <argument>%renrhaf_sylius_brevo.sms.enabled%</argument>
+            <argument>%renrhaf_sylius_brevo.sms.sender%</argument>
+            <argument>%renrhaf_sylius_brevo.sms.events%</argument>
+        </service>
+        <service id="Renrhaf\SyliusBrevoPlugin\Service\Sms\SmsServiceInterface"
+                 alias="Renrhaf\SyliusBrevoPlugin\Service\Sms\SmsService" />
+
+        <!-- Twig Extension -->
+        <service id="Renrhaf\SyliusBrevoPlugin\Twig\BrevoExtension">
+            <argument>%renrhaf_sylius_brevo.tracker.enabled%</argument>
+            <argument>%renrhaf_sylius_brevo.api.client_key%</argument>
+            <argument>%renrhaf_sylius_brevo.chat.enabled%</argument>
+            <argument>%renrhaf_sylius_brevo.chat.widget_id%</argument>
+            <tag name="twig.extension" />
+        </service>
+
+        <!-- Form Extension -->
+        <service id="Renrhaf\SyliusBrevoPlugin\Form\Extension\CheckoutNewsletterExtension">
+            <argument>%renrhaf_sylius_brevo.newsletter.checkout_subscribe%</argument>
+            <tag name="form.type_extension" />
+        </service>
+
+        <!-- Admin Controller -->
+        <service id="Renrhaf\SyliusBrevoPlugin\Controller\Admin\DashboardController" public="true">
+            <argument type="service" id="renrhaf_sylius_brevo.api.client" />
+            <argument type="service" id="doctrine.dbal.default_connection" />
+            <argument type="service" id="logger" />
+            <tag name="controller.service_arguments" />
+        </service>
+
+        <!-- Admin Menu -->
+        <service id="Renrhaf\SyliusBrevoPlugin\Menu\AdminMenuListener" />
+
         <!-- Commands -->
         <service id="Renrhaf\SyliusBrevoPlugin\Command\SyncProductsCommand">
             <tag name="console.command" />

@@ -7,13 +7,27 @@ renrhaf_sylius_brevo:
         connection_status: Connection Status
         connected: Connected
         disconnected: Disconnected
+        features: Features
+        feature_contacts: Contacts Sync
+        feature_products: Products Sync
+        feature_orders: Orders Sync
+        feature_categories: Categories Sync
+        feature_cart_tracking: Cart Tracking
+        feature_newsletter: Newsletter
+        feature_tracker: JS Tracker
+        feature_chat: Live Chat
+        feature_transactional_email: Transactional Emails
+        feature_sms: SMS Notifications
+        feature_webhook: Webhooks
+        email_stats: Email Stats (30 days)
+        recent_syncs: Recent Syncs
         sync_products: Sync Products
         sync_orders: Sync Orders
         sync_contacts: Sync Contacts
         sync_categories: Sync Categories
         last_sync: Last Sync
-        items_processed: Items Processed
-        items_failed: Items Failed
+        items_processed: Processed
+        items_failed: Failed
         email: Email
         subject: Subject
         status: Status
@@ -23,4 +37,6 @@ renrhaf_sylius_brevo:
         opened: Opened
         clicked: Clicked
         bounced: Bounced
-        created_at: Created At
+        created_at: Date
+        no_data: No data available
+        subscribe_newsletter: Subscribe to our newsletter

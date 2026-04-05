@@ -1,0 +1,18 @@
+{# Brevo Conversations (Live Chat) Widget — inject in shop base footer #}
+{% if brevo_chat_enabled and brevo_chat_widget_id %}
+<script>
+    (function(d, w, c) {
+        w.BresoftWidget = c;
+        w[c] = w[c] || function() {
+            (w[c].q = w[c].q || []).push(arguments);
+        };
+        var s = d.createElement('script');
+        s.async = true;
+        s.src = 'https://conversations-widget.brevo.com/brevo-conversations.js';
+        if (d.head) d.head.appendChild(s);
+        w[c]('init', {
+            websiteId: '{{ brevo_chat_widget_id|e('js') }}'
+        });
+    })(document, window, 'BrevoConversations');
+</script>
+{% endif %}
