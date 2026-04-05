@@ -4,6 +4,6 @@ renrhaf_sylius_brevo_webhook:
     methods: [POST]
 
 renrhaf_sylius_brevo_admin_dashboard:
-    path: /%sylius_admin.path_prefix%/brevo
+    path: /%sylius_admin.path_name%/brevo
     controller: Renrhaf\SyliusBrevoPlugin\Controller\Admin\DashboardController
     methods: [GET]
