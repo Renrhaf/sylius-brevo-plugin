@@ -12,6 +12,7 @@ final class ProductMapper implements ProductMapperInterface
 {
     public function __construct(
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly string $baseUrl = '',
     ) {
     }
 
@@ -19,42 +20,56 @@ final class ProductMapper implements ProductMapperInterface
     {
         $translation = $product->getTranslation($locale);
 
-        // Get the first variant's price
+        // Get the first enabled variant's price
         $price = 0.0;
         $sku = $product->getCode() ?? '';
-        $firstVariant = $product->getVariants()->first();
 
-        if ($firstVariant instanceof ProductVariantInterface) {
-            $channelPricing = $firstVariant->getChannelPricingForChannel(
-                $product->getChannels()->first(),
-            );
-
-            if (null !== $channelPricing) {
-                $price = $channelPricing->getPrice() / 100;
+        foreach ($product->getVariants() as $variant) {
+            if (!$variant instanceof ProductVariantInterface) {
+                continue;
             }
 
-            $sku = $firstVariant->getCode() ?? $sku;
+            foreach ($variant->getChannelPricings() as $pricing) {
+                if ($pricing->getChannelCode() === $channelCode && null !== $pricing->getPrice()) {
+                    $price = $pricing->getPrice() / 100;
+                    $sku = $variant->getCode() ?? $sku;
+
+                    break 2;
+                }
+            }
         }
 
         // Build product URL
+        $slug = $translation->getSlug();
         $url = '';
 
-        try {
-            $url = $this->urlGenerator->generate(
-                'sylius_shop_product_show',
-                ['slug' => $translation->getSlug(), '_locale' => $locale],
-                UrlGeneratorInterface::ABSOLUTE_URL,
-            );
-        } catch (\Throwable) {
-            // URL generation may fail outside request context
+        if (null !== $slug && '' !== $slug) {
+            try {
+                $url = $this->urlGenerator->generate(
+                    'sylius_shop_product_show',
+                    ['slug' => $slug, '_locale' => $locale],
+                    UrlGeneratorInterface::ABSOLUTE_URL,
+                );
+            } catch (\Throwable) {
+                // Fallback: build URL manually when outside HTTP context (CLI)
+                if ('' !== $this->baseUrl) {
+                    $url = rtrim($this->baseUrl, '/') . '/' . $locale . '/products/' . $slug;
+                }
+            }
         }
 
         // Get image URL
         $imageUrl = '';
         $firstImage = $product->getImages()->first();
 
-        if (false !== $firstImage) {
-            $imageUrl = $firstImage->getPath() ?? '';
+        if (false !== $firstImage && null !== $firstImage->getPath()) {
+            $path = $firstImage->getPath();
+            // Build absolute URL for image
+            if ('' !== $this->baseUrl && !str_starts_with($path, 'http')) {
+                $imageUrl = rtrim($this->baseUrl, '/') . '/media/image/' . ltrim($path, '/');
+            } else {
+                $imageUrl = $path;
+            }
         }
 
         // Get category IDs

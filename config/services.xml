@@ -25,6 +25,7 @@
 
         <service id="Renrhaf\SyliusBrevoPlugin\Mapper\ProductMapper">
             <argument type="service" id="router" />
+            <argument>%router.request_context.scheme%://%router.request_context.host%</argument>
         </service>
         <service id="Renrhaf\SyliusBrevoPlugin\Mapper\ProductMapperInterface"
                  alias="Renrhaf\SyliusBrevoPlugin\Mapper\ProductMapper" />
