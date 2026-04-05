@@ -1,0 +1,146 @@
+{# Connection Status #}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">{{ 'renrhaf_sylius_brevo.ui.connection_status'|trans }}</h3>
+            </div>
+            <div class="card-body">
+                {% if hookable_metadata.context.account %}
+                    <div class="alert alert-success">
+                        {{ ux_icon('tabler:circle-check', {class: 'icon me-1'}) }}
+                        <strong>{{ 'renrhaf_sylius_brevo.ui.connected'|trans }}</strong>
+                        — {{ hookable_metadata.context.account.companyName ?? 'N/A' }}
+                        ({{ hookable_metadata.context.account.email ?? '' }})
+                        {% if hookable_metadata.context.account.plan is defined %}
+                            <span class="badge text-white bg-primary ms-2">{{ hookable_metadata.context.account.plan[0].type ?? 'free' }}</span>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-danger">
+                        {{ ux_icon('tabler:alert-triangle', {class: 'icon me-1'}) }}
+                        <strong>{{ 'renrhaf_sylius_brevo.ui.disconnected'|trans }}</strong>
+                        {% if hookable_metadata.context.connectionError %}
+                            <br><small class="text-muted">{{ hookable_metadata.context.connectionError }}</small>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Feature Status #}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">{{ 'renrhaf_sylius_brevo.ui.features'|trans }}</h3>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% for feature, enabled in hookable_metadata.context.features %}
+                        <div class="col-6 col-md-4 col-lg-3">
+                            <div class="d-flex align-items-center">
+                                {% if enabled %}
+                                    <span class="badge text-white bg-success me-2">ON</span>
+                                {% else %}
+                                    <span class="badge text-white bg-secondary me-2">OFF</span>
+                                {% endif %}
+                                <span>{{ ('renrhaf_sylius_brevo.ui.feature_' ~ feature)|trans }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    {# Email Stats (last 30 days) #}
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">{{ 'renrhaf_sylius_brevo.ui.email_stats'|trans }}</h3>
+            </div>
+            <div class="card-body">
+                {% if hookable_metadata.context.emailStats %}
+                    <div class="row text-center">
+                        <div class="col">
+                            <div class="h1 mb-0">{{ hookable_metadata.context.emailStats.total ?? 0 }}</div>
+                            <div class="text-muted">{{ 'renrhaf_sylius_brevo.ui.sent'|trans }}</div>
+                        </div>
+                        <div class="col">
+                            <div class="h1 mb-0 text-success">{{ hookable_metadata.context.emailStats.delivered ?? 0 }}</div>
+                            <div class="text-muted">{{ 'renrhaf_sylius_brevo.ui.delivered'|trans }}</div>
+                        </div>
+                        <div class="col">
+                            <div class="h1 mb-0 text-primary">{{ hookable_metadata.context.emailStats.opened ?? 0 }}</div>
+                            <div class="text-muted">{{ 'renrhaf_sylius_brevo.ui.opened'|trans }}</div>
+                        </div>
+                        <div class="col">
+                            <div class="h1 mb-0 text-info">{{ hookable_metadata.context.emailStats.clicked ?? 0 }}</div>
+                            <div class="text-muted">{{ 'renrhaf_sylius_brevo.ui.clicked'|trans }}</div>
+                        </div>
+                        <div class="col">
+                            <div class="h1 mb-0 text-danger">{{ hookable_metadata.context.emailStats.bounced ?? 0 }}</div>
+                            <div class="text-muted">{{ 'renrhaf_sylius_brevo.ui.bounced'|trans }}</div>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">{{ 'renrhaf_sylius_brevo.ui.no_data'|trans }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Recent Syncs #}
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">{{ 'renrhaf_sylius_brevo.ui.recent_syncs'|trans }}</h3>
+            </div>
+            <div class="card-body p-0">
+                {% if hookable_metadata.context.syncLogs %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>{{ 'renrhaf_sylius_brevo.ui.type'|trans }}</th>
+                                    <th>{{ 'renrhaf_sylius_brevo.ui.status'|trans }}</th>
+                                    <th>{{ 'renrhaf_sylius_brevo.ui.items_processed'|trans }}</th>
+                                    <th>{{ 'renrhaf_sylius_brevo.ui.items_failed'|trans }}</th>
+                                    <th>{{ 'renrhaf_sylius_brevo.ui.created_at'|trans }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in hookable_metadata.context.syncLogs %}
+                                    <tr>
+                                        <td>{{ log.type }}</td>
+                                        <td>
+                                            {% if log.status == 'completed' %}
+                                                <span class="badge text-white bg-success">{{ log.status }}</span>
+                                            {% elseif log.status == 'failed' %}
+                                                <span class="badge text-white bg-danger">{{ log.status }}</span>
+                                            {% else %}
+                                                <span class="badge text-white bg-warning">{{ log.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ log.items_processed ?? 0 }}</td>
+                                        <td>{{ log.items_failed ?? 0 }}</td>
+                                        <td>{{ log.started_at }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="card-body">
+                        <p class="text-muted mb-0">{{ 'renrhaf_sylius_brevo.ui.no_data'|trans }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
