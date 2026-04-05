@@ -5,19 +5,21 @@ declare(strict_types=1);
 namespace Renrhaf\SyliusBrevoPlugin\EventListener;
 
 use Psr\Log\LoggerInterface;
+use Renrhaf\SyliusBrevoPlugin\Message\SyncOrderMessage;
 use Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CartTrackingServiceInterface;
-use Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\OrderSyncServiceInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\EventDispatcher\GenericEvent;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
- * Listens to Sylius order events to sync orders and track carts in Brevo.
+ * Dispatches async order sync messages to Brevo on order completion.
+ * Cart tracking remains synchronous (event-driven).
  */
 final class OrderSyncListener
 {
     public function __construct(
-        private readonly OrderSyncServiceInterface $orderSyncService,
+        private readonly MessageBusInterface $messageBus,
         private readonly CartTrackingServiceInterface $cartTrackingService,
         private readonly LoggerInterface $logger,
         private readonly bool $orderSyncEnabled,
@@ -35,14 +37,7 @@ final class OrderSyncListener
         }
 
         if ($this->orderSyncEnabled) {
-            try {
-                $this->orderSyncService->syncOrder($order);
-            } catch (\Throwable $e) {
-                $this->logger->error('Failed to sync order to Brevo', [
-                    'order' => $order->getNumber(),
-                    'error' => $e->getMessage(),
-                ]);
-            }
+            $this->messageBus->dispatch(new SyncOrderMessage($order->getId()));
         }
 
         if ($this->cartTrackingEnabled) {

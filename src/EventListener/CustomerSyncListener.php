@@ -4,21 +4,22 @@ declare(strict_types=1);
 
 namespace Renrhaf\SyliusBrevoPlugin\EventListener;
 
-use Renrhaf\SyliusBrevoPlugin\Service\Contact\ContactSyncServiceInterface;
+use Renrhaf\SyliusBrevoPlugin\Message\SyncContactMessage;
 use Renrhaf\SyliusBrevoPlugin\Service\Newsletter\NewsletterServiceInterface;
 use Renrhaf\SyliusBrevoPlugin\Service\Webhook\Handler\UnsubscribeHandler;
 use Sylius\Component\Core\Model\CustomerInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\EventDispatcher\GenericEvent;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
- * Syncs customer data to Brevo on create/update.
- * Also handles newsletter subscribe/unsubscribe.
+ * Dispatches async contact sync messages to Brevo on customer create/update.
+ * Also handles newsletter subscribe/unsubscribe synchronously.
  */
 final class CustomerSyncListener
 {
     public function __construct(
-        private readonly ContactSyncServiceInterface $contactSyncService,
+        private readonly MessageBusInterface $messageBus,
         private readonly NewsletterServiceInterface $newsletterService,
         private readonly bool $syncOnCreate,
         private readonly bool $syncOnUpdate,
@@ -39,7 +40,7 @@ final class CustomerSyncListener
             return;
         }
 
-        $this->contactSyncService->syncCustomer($customer);
+        $this->messageBus->dispatch(new SyncContactMessage($customer->getId()));
 
         if ($this->newsletterEnabled && $customer->isSubscribedToNewsletter()) {
             $this->newsletterService->subscribe(
@@ -63,6 +64,6 @@ final class CustomerSyncListener
             return;
         }
 
-        $this->contactSyncService->syncCustomer($customer);
+        $this->messageBus->dispatch(new SyncContactMessage($customer->getId()));
     }
 }

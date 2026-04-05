@@ -132,9 +132,40 @@
             <tag name="controller.service_arguments" />
         </service>
 
+        <!-- Message Handlers -->
+        <service id="Renrhaf\SyliusBrevoPlugin\MessageHandler\SyncContactHandler">
+            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Service\Contact\ContactSyncServiceInterface" />
+            <argument type="service" id="sylius.repository.customer" />
+            <argument type="service" id="logger" />
+            <tag name="messenger.message_handler" />
+        </service>
+
+        <service id="Renrhaf\SyliusBrevoPlugin\MessageHandler\SyncOrderHandler">
+            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\OrderSyncServiceInterface" />
+            <argument type="service" id="sylius.repository.order" />
+            <argument type="service" id="logger" />
+            <tag name="messenger.message_handler" />
+        </service>
+
+        <service id="Renrhaf\SyliusBrevoPlugin\MessageHandler\SyncProductHandler">
+            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\ProductSyncServiceInterface" />
+            <argument type="service" id="sylius.repository.product" />
+            <argument type="service" id="logger" />
+            <tag name="messenger.message_handler" />
+        </service>
+
+        <service id="Renrhaf\SyliusBrevoPlugin\MessageHandler\SyncCategoryHandler">
+            <argument type="service" id="renrhaf_sylius_brevo.api.client" />
+            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Mapper\CategoryMapperInterface" />
+            <argument type="service" id="sylius.repository.taxon" />
+            <argument type="service" id="logger" />
+            <argument>%locale%</argument>
+            <tag name="messenger.message_handler" />
+        </service>
+
         <!-- Event Listeners -->
         <service id="Renrhaf\SyliusBrevoPlugin\EventListener\CustomerSyncListener">
-            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Service\Contact\ContactSyncServiceInterface" />
+            <argument type="service" id="messenger.default_bus" />
             <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Service\Newsletter\NewsletterServiceInterface" />
             <argument>%renrhaf_sylius_brevo.contacts.sync_on_create%</argument>
             <argument>%renrhaf_sylius_brevo.contacts.sync_on_update%</argument>
@@ -142,11 +173,21 @@
         </service>
 
         <service id="Renrhaf\SyliusBrevoPlugin\EventListener\OrderSyncListener">
-            <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\OrderSyncServiceInterface" />
+            <argument type="service" id="messenger.default_bus" />
             <argument type="service" id="Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CartTrackingServiceInterface" />
             <argument type="service" id="logger" />
             <argument>%renrhaf_sylius_brevo.ecommerce.orders.sync_enabled%</argument>
             <argument>%renrhaf_sylius_brevo.ecommerce.cart_tracking.enabled%</argument>
+        </service>
+
+        <service id="Renrhaf\SyliusBrevoPlugin\EventListener\ProductSyncListener">
+            <argument type="service" id="messenger.default_bus" />
+            <argument>%renrhaf_sylius_brevo.ecommerce.products.sync_enabled%</argument>
+        </service>
+
+        <service id="Renrhaf\SyliusBrevoPlugin\EventListener\TaxonSyncListener">
+            <argument type="service" id="messenger.default_bus" />
+            <argument>%renrhaf_sylius_brevo.ecommerce.categories.sync_enabled%</argument>
         </service>
 
         <service id="Renrhaf\SyliusBrevoPlugin\EventListener\CartTrackingListener">
