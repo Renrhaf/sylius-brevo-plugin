@@ -14,13 +14,15 @@ final class AdminMenuListener
     {
         $menu = $event->getMenu();
 
-        $brevoMenu = $menu
-            ->addChild('brevo')
-            ->setLabel('renrhaf_sylius_brevo.ui.brevo');
+        $configMenu = $menu->getChild('configuration');
 
-        $brevoMenu
+        if (null === $configMenu) {
+            return;
+        }
+
+        $configMenu
             ->addChild('brevo_dashboard', ['route' => 'renrhaf_sylius_brevo_admin_dashboard'])
-            ->setLabel('renrhaf_sylius_brevo.ui.dashboard')
-            ->setLabelAttribute('icon', 'tabler:brand-brevo');
+            ->setLabel('renrhaf_sylius_brevo.ui.brevo')
+            ->setLabelAttribute('icon', 'tabler:mail-bolt');
     }
 }
