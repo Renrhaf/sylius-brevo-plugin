@@ -52,14 +52,18 @@ final class ProductSyncService implements ProductSyncServiceInterface
                 }
 
                 try {
-                    $batch[] = $this->productMapper->map($product, $this->defaultLocale, $this->defaultChannelCode);
+                    $mapped = $this->productMapper->map($product, $this->defaultLocale, $this->defaultChannelCode);
 
-                    if (\count($batch) >= $this->batchSize) {
-                        $this->brevoClient->batchCreateOrUpdateProducts($batch);
-                        $processed += \count($batch);
-                        $syncLog->incrementProcessed(\count($batch));
-                        $batch = [];
+                    // Skip products missing required Brevo fields
+                    if ('' === ($mapped['name'] ?? '') || '' === ($mapped['url'] ?? '') || '' === ($mapped['imageUrl'] ?? '')) {
+                        ++$failed;
+                        $syncLog->incrementFailed();
+                        $this->logger->debug('Skipping product with missing fields', ['code' => $product->getCode()]);
+
+                        continue;
                     }
+
+                    $batch[] = $mapped;
                 } catch (\Throwable $e) {
                     ++$failed;
                     $syncLog->incrementFailed();
@@ -67,21 +71,38 @@ final class ProductSyncService implements ProductSyncServiceInterface
                         'code' => $product->getCode(),
                         'error' => $e->getMessage(),
                     ]);
+
+                    continue;
+                }
+
+                if (\count($batch) >= $this->batchSize) {
+                    try {
+                        $this->brevoClient->batchCreateOrUpdateProducts($batch);
+                        $processed += \count($batch);
+                        $syncLog->incrementProcessed(\count($batch));
+                    } catch (\Throwable $e) {
+                        $failed += \count($batch);
+                        $syncLog->incrementFailed(\count($batch));
+                        $this->logger->warning('Batch product sync failed', ['error' => $e->getMessage()]);
+                    }
+                    $batch = [];
                 }
             }
 
             // Flush remaining batch
             if ([] !== $batch) {
-                $this->brevoClient->batchCreateOrUpdateProducts($batch);
-                $processed += \count($batch);
-                $syncLog->incrementProcessed(\count($batch));
+                try {
+                    $this->brevoClient->batchCreateOrUpdateProducts($batch);
+                    $processed += \count($batch);
+                    $syncLog->incrementProcessed(\count($batch));
+                } catch (\Throwable $e) {
+                    $failed += \count($batch);
+                    $syncLog->incrementFailed(\count($batch));
+                    $this->logger->warning('Final batch product sync failed', ['error' => $e->getMessage()]);
+                }
             }
 
             $syncLog->markCompleted();
-        } catch (\Throwable $e) {
-            $syncLog->markFailed($e->getMessage());
-
-            throw $e;
         } finally {
             $this->entityManager->flush();
         }
