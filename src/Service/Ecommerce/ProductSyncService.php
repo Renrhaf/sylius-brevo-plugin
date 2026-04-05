@@ -28,9 +28,16 @@ final class ProductSyncService implements ProductSyncServiceInterface
 
     public function syncProduct(ProductInterface $product): void
     {
-        $payload = $this->productMapper->map($product, $this->defaultLocale, $this->defaultChannelCode);
-        $this->brevoClient->createOrUpdateProduct($payload);
-        $this->logger->info('Product synced to Brevo', ['code' => $product->getCode()]);
+        $payloads = $this->productMapper->map($product, $this->defaultLocale, $this->defaultChannelCode);
+
+        foreach ($payloads as $payload) {
+            $this->brevoClient->createOrUpdateProduct($payload);
+        }
+
+        $this->logger->info('Product synced to Brevo', [
+            'code' => $product->getCode(),
+            'variants' => \count($payloads) - 1,
+        ]);
     }
 
     public function syncAll(): array
@@ -52,18 +59,23 @@ final class ProductSyncService implements ProductSyncServiceInterface
                 }
 
                 try {
-                    $mapped = $this->productMapper->map($product, $this->defaultLocale, $this->defaultChannelCode);
+                    $mappedProducts = $this->productMapper->map($product, $this->defaultLocale, $this->defaultChannelCode);
 
-                    // Skip products missing required Brevo fields
-                    if ('' === ($mapped['name'] ?? '') || '' === ($mapped['url'] ?? '') || '' === ($mapped['imageUrl'] ?? '')) {
-                        ++$failed;
-                        $syncLog->incrementFailed();
-                        $this->logger->debug('Skipping product with missing fields', ['code' => $product->getCode()]);
+                    foreach ($mappedProducts as $mapped) {
+                        // Skip products missing required Brevo fields
+                        if ('' === ($mapped['name'] ?? '') || '' === ($mapped['url'] ?? '') || '' === ($mapped['imageUrl'] ?? '')) {
+                            continue;
+                        }
 
-                        continue;
+                        $batch[] = $mapped;
+
+                        if (\count($batch) >= $this->batchSize) {
+                            [$p, $f] = $this->sendBatch($batch, $syncLog);
+                            $processed += $p;
+                            $failed += $f;
+                            $batch = [];
+                        }
                     }
-
-                    $batch[] = $mapped;
                 } catch (\Throwable $e) {
                     ++$failed;
                     $syncLog->incrementFailed();
@@ -73,13 +85,6 @@ final class ProductSyncService implements ProductSyncServiceInterface
                     ]);
 
                     continue;
-                }
-
-                if (\count($batch) >= $this->batchSize) {
-                    [$p, $f] = $this->sendBatch($batch, $syncLog);
-                    $processed += $p;
-                    $failed += $f;
-                    $batch = [];
                 }
             }
 

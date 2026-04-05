@@ -19,58 +19,13 @@ final class ProductMapper implements ProductMapperInterface
     public function map(ProductInterface $product, string $locale, string $channelCode): array
     {
         $translation = $product->getTranslation($locale);
-
-        // Get the first enabled variant's price
-        $price = 0.0;
-        $sku = $product->getCode() ?? '';
-
-        foreach ($product->getVariants() as $variant) {
-            if (!$variant instanceof ProductVariantInterface) {
-                continue;
-            }
-
-            foreach ($variant->getChannelPricings() as $pricing) {
-                if ($pricing->getChannelCode() === $channelCode && null !== $pricing->getPrice()) {
-                    $price = $pricing->getPrice() / 100;
-                    $sku = $variant->getCode() ?? $sku;
-
-                    break 2;
-                }
-            }
-        }
+        $productCode = $product->getCode() ?? '';
 
         // Build product URL
-        $slug = $translation->getSlug();
-        $url = '';
-
-        if (null !== $slug && '' !== $slug) {
-            try {
-                $url = $this->urlGenerator->generate(
-                    'sylius_shop_product_show',
-                    ['slug' => $slug, '_locale' => $locale],
-                    UrlGeneratorInterface::ABSOLUTE_URL,
-                );
-            } catch (\Throwable) {
-                // Fallback: build URL manually when outside HTTP context (CLI)
-                if ('' !== $this->baseUrl) {
-                    $url = rtrim($this->baseUrl, '/') . '/' . $locale . '/products/' . $slug;
-                }
-            }
-        }
+        $url = $this->buildProductUrl($translation->getSlug(), $locale);
 
         // Get image URL
-        $imageUrl = '';
-        $firstImage = $product->getImages()->first();
-
-        if (false !== $firstImage && null !== $firstImage->getPath()) {
-            $path = $firstImage->getPath();
-            // Build absolute URL for image
-            if ('' !== $this->baseUrl && !str_starts_with($path, 'http')) {
-                $imageUrl = rtrim($this->baseUrl, '/') . '/media/image/' . ltrim($path, '/');
-            } else {
-                $imageUrl = $path;
-            }
-        }
+        $imageUrl = $this->buildImageUrl($product);
 
         // Get category IDs
         $categories = [];
@@ -79,19 +34,118 @@ final class ProductMapper implements ProductMapperInterface
             $categories[] = (string) $taxon->getCode();
         }
 
-        return [
-            'id' => $product->getCode(),
+        $description = mb_substr(strip_tags($translation->getDescription() ?? ''), 0, 2500);
+
+        // Build parent product
+        $variants = $product->getVariants();
+        $firstVariant = $variants->first();
+        $firstPrice = 0.0;
+
+        if ($firstVariant instanceof ProductVariantInterface) {
+            $firstPrice = $this->getVariantPrice($firstVariant, $channelCode);
+        }
+
+        $parent = [
+            'id' => $productCode,
             'name' => $translation->getName() ?? '',
             'url' => $url,
             'imageUrl' => $imageUrl,
-            'sku' => $sku,
-            'price' => $price,
+            'sku' => $productCode,
+            'price' => $firstPrice,
             'categories' => $categories,
-            'description' => mb_substr(strip_tags($translation->getDescription() ?? ''), 0, 2500),
-            'metaInfo' => [
-                'slug' => $translation->getSlug(),
-            ],
+            'description' => $description,
+            'metaInfo' => ['slug' => $translation->getSlug()],
             'updateEnabled' => true,
         ];
+
+        $results = [$parent];
+
+        // If product has multiple variants, add each as a child product
+        if ($variants->count() > 1) {
+            foreach ($variants as $variant) {
+                if (!$variant instanceof ProductVariantInterface) {
+                    continue;
+                }
+
+                $variantCode = $variant->getCode();
+
+                if (null === $variantCode || $variantCode === $productCode) {
+                    continue;
+                }
+
+                $variantTranslation = $variant->getTranslation($locale);
+                $variantName = $variantTranslation->getName();
+                $displayName = $translation->getName() ?? '';
+
+                if (null !== $variantName && '' !== $variantName) {
+                    $displayName .= ' — ' . $variantName;
+                }
+
+                $results[] = [
+                    'id' => $variantCode,
+                    'name' => $displayName,
+                    'url' => $url,
+                    'imageUrl' => $imageUrl,
+                    'sku' => $variantCode,
+                    'price' => $this->getVariantPrice($variant, $channelCode),
+                    'categories' => $categories,
+                    'description' => $description,
+                    'parentId' => $productCode,
+                    'metaInfo' => ['variant' => true],
+                    'updateEnabled' => true,
+                ];
+            }
+        }
+
+        return $results;
+    }
+
+    private function getVariantPrice(ProductVariantInterface $variant, string $channelCode): float
+    {
+        foreach ($variant->getChannelPricings() as $pricing) {
+            if ($pricing->getChannelCode() === $channelCode && null !== $pricing->getPrice()) {
+                return $pricing->getPrice() / 100;
+            }
+        }
+
+        return 0.0;
+    }
+
+    private function buildProductUrl(?string $slug, string $locale): string
+    {
+        if (null === $slug || '' === $slug) {
+            return '';
+        }
+
+        try {
+            return $this->urlGenerator->generate(
+                'sylius_shop_product_show',
+                ['slug' => $slug, '_locale' => $locale],
+                UrlGeneratorInterface::ABSOLUTE_URL,
+            );
+        } catch (\Throwable) {
+            if ('' !== $this->baseUrl) {
+                return rtrim($this->baseUrl, '/') . '/' . $locale . '/products/' . $slug;
+            }
+
+            return '';
+        }
+    }
+
+    private function buildImageUrl(ProductInterface $product): string
+    {
+        $firstImage = $product->getImages()->first();
+
+        if (false === $firstImage || null === $firstImage->getPath()) {
+            return '';
+        }
+
+        $path = $firstImage->getPath();
+
+        if ('' !== $this->baseUrl && !str_starts_with($path, 'http')) {
+            return rtrim($this->baseUrl, '/') . '/media/image/' . ltrim($path, '/');
+        }
+
+        return $path;
     }
 }

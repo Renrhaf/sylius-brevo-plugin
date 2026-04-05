@@ -8,6 +8,11 @@ use Sylius\Component\Core\Model\ProductInterface;
 
 interface ProductMapperInterface
 {
-    /** @return array<string, mixed> Brevo product payload */
+    /**
+     * Maps a Sylius product to one or more Brevo product payloads.
+     * Returns the parent product + one entry per variant (linked via parentId).
+     *
+     * @return array<int, array<string, mixed>> List of Brevo product payloads
+     */
     public function map(ProductInterface $product, string $locale, string $channelCode): array;
 }
