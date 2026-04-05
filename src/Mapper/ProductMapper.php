@@ -13,6 +13,7 @@ final class ProductMapper implements ProductMapperInterface
     public function __construct(
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly string $baseUrl = '',
+        private readonly ?string $brandAttribute = null,
     ) {
     }
 
@@ -57,6 +58,12 @@ final class ProductMapper implements ProductMapperInterface
             'metaInfo' => ['slug' => $translation->getSlug()],
             'updateEnabled' => true,
         ];
+
+        $brand = $this->getProductBrand($product, $locale);
+
+        if (null !== $brand) {
+            $parent['brand'] = $brand;
+        }
 
         $results = [$parent];
 
@@ -147,5 +154,28 @@ final class ProductMapper implements ProductMapperInterface
         }
 
         return $path;
+    }
+
+    private function getProductBrand(ProductInterface $product, string $locale): ?string
+    {
+        if (null === $this->brandAttribute || '' === $this->brandAttribute) {
+            return null;
+        }
+
+        foreach ($product->getAttributes() as $attributeValue) {
+            if ($attributeValue->getLocaleCode() !== $locale) {
+                continue;
+            }
+
+            $attribute = $attributeValue->getAttribute();
+
+            if (null !== $attribute && $attribute->getCode() === $this->brandAttribute) {
+                $value = $attributeValue->getValue();
+
+                return \is_string($value) && '' !== $value ? $value : null;
+            }
+        }
+
+        return null;
     }
 }

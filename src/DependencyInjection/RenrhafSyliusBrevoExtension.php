@@ -35,6 +35,7 @@ final class RenrhafSyliusBrevoExtension extends Extension
         $container->setParameter('renrhaf_sylius_brevo.ecommerce.enabled', $config['ecommerce']['enabled']);
         $container->setParameter('renrhaf_sylius_brevo.ecommerce.products.sync_enabled', $config['ecommerce']['products']['sync_enabled']);
         $container->setParameter('renrhaf_sylius_brevo.ecommerce.products.batch_size', $config['ecommerce']['products']['batch_size']);
+        $container->setParameter('renrhaf_sylius_brevo.ecommerce.products.brand_attribute', $config['ecommerce']['products']['brand_attribute']);
         $container->setParameter('renrhaf_sylius_brevo.ecommerce.orders.sync_enabled', $config['ecommerce']['orders']['sync_enabled']);
         $container->setParameter('renrhaf_sylius_brevo.ecommerce.orders.sync_statuses', $config['ecommerce']['orders']['sync_statuses']);
         $container->setParameter('renrhaf_sylius_brevo.ecommerce.categories.sync_enabled', $config['ecommerce']['categories']['sync_enabled']);
