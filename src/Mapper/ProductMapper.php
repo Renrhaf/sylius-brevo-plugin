@@ -87,7 +87,7 @@ final class ProductMapper implements ProductMapperInterface
             'sku' => $sku,
             'price' => $price,
             'categories' => $categories,
-            'description' => mb_substr($translation->getDescription() ?? '', 0, 3000),
+            'description' => mb_substr(strip_tags($translation->getDescription() ?? ''), 0, 2500),
             'metaInfo' => [
                 'slug' => $translation->getSlug(),
             ],
