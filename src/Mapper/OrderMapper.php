@@ -61,11 +61,12 @@ final class OrderMapper implements OrderMapperInterface
             ];
         }
 
-        // Coupons
+        // Coupons — extract from promotions applied to the order
         $coupons = [];
+        $promotionCoupon = $order->getPromotionCoupon();
 
-        foreach ($order->getPromotionCoupons() as $coupon) {
-            $coupons[] = $coupon->getCode();
+        if (null !== $promotionCoupon) {
+            $coupons[] = $promotionCoupon->getCode();
         }
 
         if ([] !== $coupons) {
