@@ -76,30 +76,18 @@ final class ProductSyncService implements ProductSyncServiceInterface
                 }
 
                 if (\count($batch) >= $this->batchSize) {
-                    try {
-                        $this->brevoClient->batchCreateOrUpdateProducts($batch);
-                        $processed += \count($batch);
-                        $syncLog->incrementProcessed(\count($batch));
-                    } catch (\Throwable $e) {
-                        $failed += \count($batch);
-                        $syncLog->incrementFailed(\count($batch));
-                        $this->logger->warning('Batch product sync failed', ['error' => $e->getMessage()]);
-                    }
+                    [$p, $f] = $this->sendBatch($batch, $syncLog);
+                    $processed += $p;
+                    $failed += $f;
                     $batch = [];
                 }
             }
 
             // Flush remaining batch
             if ([] !== $batch) {
-                try {
-                    $this->brevoClient->batchCreateOrUpdateProducts($batch);
-                    $processed += \count($batch);
-                    $syncLog->incrementProcessed(\count($batch));
-                } catch (\Throwable $e) {
-                    $failed += \count($batch);
-                    $syncLog->incrementFailed(\count($batch));
-                    $this->logger->warning('Final batch product sync failed', ['error' => $e->getMessage()]);
-                }
+                [$p, $f] = $this->sendBatch($batch, $syncLog);
+                $processed += $p;
+                $failed += $f;
             }
 
             $syncLog->markCompleted();
@@ -108,5 +96,48 @@ final class ProductSyncService implements ProductSyncServiceInterface
         }
 
         return ['processed' => $processed, 'failed' => $failed];
+    }
+
+    /**
+     * Sends a batch. On failure, falls back to individual product sync.
+     *
+     * @param array<int, array<string, mixed>> $batch
+     *
+     * @return array{0: int, 1: int} [processed, failed]
+     */
+    private function sendBatch(array $batch, SyncLog $syncLog): array
+    {
+        try {
+            $this->brevoClient->batchCreateOrUpdateProducts($batch);
+            $syncLog->incrementProcessed(\count($batch));
+
+            return [\count($batch), 0];
+        } catch (\Throwable $batchError) {
+            $this->logger->info('Batch failed, falling back to individual sync', [
+                'batch_size' => \count($batch),
+                'error' => $batchError->getMessage(),
+            ]);
+        }
+
+        // Fallback: sync one by one
+        $processed = 0;
+        $failed = 0;
+
+        foreach ($batch as $product) {
+            try {
+                $this->brevoClient->createOrUpdateProduct($product);
+                ++$processed;
+                $syncLog->incrementProcessed();
+            } catch (\Throwable $e) {
+                ++$failed;
+                $syncLog->incrementFailed();
+                $this->logger->debug('Product sync failed', [
+                    'id' => $product['id'] ?? 'unknown',
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return [$processed, $failed];
     }
 }
