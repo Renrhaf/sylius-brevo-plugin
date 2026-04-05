@@ -119,10 +119,11 @@ final class BrevoClient implements BrevoClientInterface
         $this->request('POST', '/orders/status', $order);
     }
 
-    public function batchCreateOrUpdateOrders(array $orders): void
+    public function batchCreateOrUpdateOrders(array $orders, bool $historical = true): void
     {
         $this->request('POST', '/orders/status/batch', [
             'orders' => $orders,
+            'historical' => $historical,
         ]);
     }
 

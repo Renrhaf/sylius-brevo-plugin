@@ -22,11 +22,19 @@ final class OrderMapper implements OrderMapperInterface
         /** @var OrderItemInterface $item */
         foreach ($order->getItems() as $item) {
             $variant = $item->getVariant();
-            $products[] = [
-                'productId' => $variant?->getProduct()?->getCode() ?? $item->getProductName(),
+            $product = $variant?->getProduct();
+            $line = [
+                'productId' => $product?->getCode() ?? $item->getProductName(),
                 'price' => $item->getUnitPrice() / 100,
                 'quantity' => $item->getQuantity(),
             ];
+
+            // Link to variant if product has multiple variants
+            if (null !== $variant && null !== $product && $product->getVariants()->count() > 1) {
+                $line['variantId'] = $variant->getCode();
+            }
+
+            $products[] = $line;
         }
 
         // Map Sylius state to Brevo-friendly status
@@ -38,7 +46,7 @@ final class OrderMapper implements OrderMapperInterface
         };
 
         $payload = [
-            'email' => $customer->getEmail(),
+            'identifiers' => ['email_id' => $customer->getEmail()],
             'id' => $order->getNumber(),
             'createdAt' => $order->getCreatedAt()?->format('Y-m-d\TH:i:s\Z') ?? date('Y-m-d\TH:i:s\Z'),
             'updatedAt' => $order->getUpdatedAt()?->format('Y-m-d\TH:i:s\Z') ?? date('Y-m-d\TH:i:s\Z'),

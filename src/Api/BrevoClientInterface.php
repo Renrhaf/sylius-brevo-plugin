@@ -43,7 +43,7 @@ interface BrevoClientInterface
     public function createOrUpdateOrder(array $order): void;
 
     /** @param array<int, array<string, mixed>> $orders */
-    public function batchCreateOrUpdateOrders(array $orders): void;
+    public function batchCreateOrUpdateOrders(array $orders, bool $historical = true): void;
 
     // --- Ecommerce: Categories ---
     /** @param array<string, mixed> $category */
