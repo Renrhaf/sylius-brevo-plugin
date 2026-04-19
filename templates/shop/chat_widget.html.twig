@@ -2,7 +2,7 @@
 {% if brevo_chat_enabled and brevo_chat_widget_id %}
 <script>
     (function(d, w, c) {
-        w.BresoftWidget = c;
+        w.BrevoConversationsID = '{{ brevo_chat_widget_id|e('js') }}';
         w[c] = w[c] || function() {
             (w[c].q = w[c].q || []).push(arguments);
         };
@@ -10,9 +10,6 @@
         s.async = true;
         s.src = 'https://conversations-widget.brevo.com/brevo-conversations.js';
         if (d.head) d.head.appendChild(s);
-        w[c]('init', {
-            websiteId: '{{ brevo_chat_widget_id|e('js') }}'
-        });
     })(document, window, 'BrevoConversations');
 </script>
 {% endif %}
