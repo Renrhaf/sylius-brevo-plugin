@@ -1,0 +1,187 @@
+services:
+    renrhaf_sylius_brevo.api.client:
+        class: Renrhaf\SyliusBrevoPlugin\Api\BrevoClient
+        autowire: true
+        autoconfigure: true
+        arguments: ['@http_client', '@logger', '%renrhaf_sylius_brevo.api.key%']
+    Renrhaf\SyliusBrevoPlugin\Mapper\ContactMapper:
+        autowire: true
+        autoconfigure: true
+        arguments: ['%renrhaf_sylius_brevo.contacts.attribute_mapping%']
+    Renrhaf\SyliusBrevoPlugin\Mapper\ProductMapper:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@router', '%router.request_context.scheme%://%router.request_context.host%', '%renrhaf_sylius_brevo.ecommerce.products.brand_attribute%']
+    Renrhaf\SyliusBrevoPlugin\Mapper\OrderMapper:
+        autowire: true
+        autoconfigure: true
+    Renrhaf\SyliusBrevoPlugin\Mapper\CategoryMapper:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@router']
+    Renrhaf\SyliusBrevoPlugin\Service\Newsletter\NewsletterService:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@renrhaf_sylius_brevo.api.client', '@logger', '%renrhaf_sylius_brevo.newsletter.list_id%', '%renrhaf_sylius_brevo.newsletter.double_opt_in%', '%renrhaf_sylius_brevo.newsletter.doi_template_id%', '%renrhaf_sylius_brevo.newsletter.doi_redirect_url%']
+    Renrhaf\SyliusBrevoPlugin\Service\Contact\ContactSyncService:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@renrhaf_sylius_brevo.api.client', '@Renrhaf\SyliusBrevoPlugin\Mapper\ContactMapperInterface', '@sylius.repository.customer', '@doctrine.orm.entity_manager', '@logger', '%renrhaf_sylius_brevo.newsletter.list_id%']
+    Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\ProductSyncService:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@renrhaf_sylius_brevo.api.client', '@Renrhaf\SyliusBrevoPlugin\Mapper\ProductMapperInterface', '@sylius.repository.product', '@doctrine.orm.entity_manager', '@logger', '%locale%', TI_WEB, '%renrhaf_sylius_brevo.ecommerce.products.batch_size%']
+    Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\OrderSyncService:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@renrhaf_sylius_brevo.api.client', '@Renrhaf\SyliusBrevoPlugin\Mapper\OrderMapperInterface', '@sylius.repository.order', '@doctrine.orm.entity_manager', '@logger', '%renrhaf_sylius_brevo.ecommerce.orders.sync_statuses%']
+    Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CategorySyncService:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@renrhaf_sylius_brevo.api.client', '@Renrhaf\SyliusBrevoPlugin\Mapper\CategoryMapperInterface', '@sylius.repository.taxon', '@doctrine.orm.entity_manager', '@logger', '%locale%']
+    Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CartTrackingService:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@renrhaf_sylius_brevo.api.client', '@logger']
+    Renrhaf\SyliusBrevoPlugin\Service\Webhook\Handler\EmailEventHandler:
+        tags:
+            - renrhaf_sylius_brevo.webhook_handler
+        autowire: true
+        autoconfigure: true
+        arguments: ['@doctrine.orm.entity_manager']
+    Renrhaf\SyliusBrevoPlugin\Service\Webhook\Handler\UnsubscribeHandler:
+        tags:
+            - renrhaf_sylius_brevo.webhook_handler
+        autowire: true
+        autoconfigure: true
+        arguments: ['@sylius.repository.customer', '@doctrine.orm.entity_manager', '@logger']
+    Renrhaf\SyliusBrevoPlugin\Controller\Webhook\BrevoWebhookController:
+        public: true
+        tags:
+            - controller.service_arguments
+        autowire: true
+        autoconfigure: true
+        arguments: [!tagged_iterator renrhaf_sylius_brevo.webhook_handler, '@logger', '%renrhaf_sylius_brevo.webhook.secret%', '%renrhaf_sylius_brevo.webhook.enabled%']
+    Renrhaf\SyliusBrevoPlugin\MessageHandler\SyncContactHandler:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@Renrhaf\SyliusBrevoPlugin\Service\Contact\ContactSyncServiceInterface', '@sylius.repository.customer', '@logger']
+    Renrhaf\SyliusBrevoPlugin\MessageHandler\SyncOrderHandler:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\OrderSyncServiceInterface', '@sylius.repository.order', '@logger']
+    Renrhaf\SyliusBrevoPlugin\MessageHandler\SyncProductHandler:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\ProductSyncServiceInterface', '@sylius.repository.product', '@logger']
+    Renrhaf\SyliusBrevoPlugin\MessageHandler\SyncCategoryHandler:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@renrhaf_sylius_brevo.api.client', '@Renrhaf\SyliusBrevoPlugin\Mapper\CategoryMapperInterface', '@sylius.repository.taxon', '@logger', '%locale%']
+    Renrhaf\SyliusBrevoPlugin\EventListener\CustomerSyncListener:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@messenger.default_bus', '@Renrhaf\SyliusBrevoPlugin\Service\Newsletter\NewsletterServiceInterface', '%renrhaf_sylius_brevo.contacts.sync_on_create%', '%renrhaf_sylius_brevo.contacts.sync_on_update%', '%renrhaf_sylius_brevo.newsletter.enabled%']
+    Renrhaf\SyliusBrevoPlugin\EventListener\OrderSyncListener:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@messenger.default_bus', '@Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CartTrackingServiceInterface', '@logger', '%renrhaf_sylius_brevo.ecommerce.orders.sync_enabled%', '%renrhaf_sylius_brevo.ecommerce.cart_tracking.enabled%']
+    Renrhaf\SyliusBrevoPlugin\EventListener\ProductSyncListener:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@messenger.default_bus', '%renrhaf_sylius_brevo.ecommerce.products.sync_enabled%']
+    Renrhaf\SyliusBrevoPlugin\EventListener\TaxonSyncListener:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@messenger.default_bus', '%renrhaf_sylius_brevo.ecommerce.categories.sync_enabled%']
+    Renrhaf\SyliusBrevoPlugin\EventListener\CartTrackingListener:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CartTrackingServiceInterface', '@logger', '%renrhaf_sylius_brevo.ecommerce.cart_tracking.enabled%']
+    Renrhaf\SyliusBrevoPlugin\EventListener\TransactionalEmailListener:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@Renrhaf\SyliusBrevoPlugin\Service\Email\TransactionalEmailServiceInterface', '%renrhaf_sylius_brevo.transactional_email.enabled%']
+    Renrhaf\SyliusBrevoPlugin\EventListener\SmsNotificationListener:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@Renrhaf\SyliusBrevoPlugin\Service\Sms\SmsServiceInterface', '%renrhaf_sylius_brevo.sms.enabled%']
+    Renrhaf\SyliusBrevoPlugin\EventListener\CheckoutNewsletterListener:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@Renrhaf\SyliusBrevoPlugin\Service\Newsletter\NewsletterServiceInterface', '@logger', '%renrhaf_sylius_brevo.newsletter.checkout_subscribe%']
+    Renrhaf\SyliusBrevoPlugin\Service\Email\TransactionalEmailService:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@renrhaf_sylius_brevo.api.client', '@logger', '%renrhaf_sylius_brevo.transactional_email.enabled%', '%renrhaf_sylius_brevo.transactional_email.sender.name%', '%renrhaf_sylius_brevo.transactional_email.sender.email%', '%renrhaf_sylius_brevo.transactional_email.templates%']
+    Renrhaf\SyliusBrevoPlugin\Service\Sms\SmsService:
+        autowire: true
+        autoconfigure: true
+        arguments: ['@renrhaf_sylius_brevo.api.client', '@logger', '%renrhaf_sylius_brevo.sms.enabled%', '%renrhaf_sylius_brevo.sms.sender%', '%renrhaf_sylius_brevo.sms.events%']
+    Renrhaf\SyliusBrevoPlugin\Twig\BrevoExtension:
+        tags:
+            - twig.extension
+        autowire: true
+        autoconfigure: true
+        arguments: ['%renrhaf_sylius_brevo.tracker.enabled%', '%renrhaf_sylius_brevo.api.client_key%', '%renrhaf_sylius_brevo.chat.enabled%', '%renrhaf_sylius_brevo.chat.widget_id%']
+    Renrhaf\SyliusBrevoPlugin\Form\Extension\CheckoutNewsletterExtension:
+        tags:
+            - form.type_extension
+        autowire: true
+        autoconfigure: true
+        arguments: ['%renrhaf_sylius_brevo.newsletter.checkout_subscribe%']
+    Renrhaf\SyliusBrevoPlugin\Controller\Admin\DashboardController:
+        public: true
+        tags:
+            - controller.service_arguments
+        autowire: true
+        autoconfigure: true
+        arguments: ['@renrhaf_sylius_brevo.api.client', '@doctrine.dbal.default_connection', '@logger']
+    Renrhaf\SyliusBrevoPlugin\Menu\AdminMenuListener:
+        autowire: true
+        autoconfigure: true
+    Renrhaf\SyliusBrevoPlugin\Command\SyncProductsCommand:
+        tags:
+            - console.command
+        autowire: true
+        autoconfigure: true
+    Renrhaf\SyliusBrevoPlugin\Command\SyncOrdersCommand:
+        tags:
+            - console.command
+        autowire: true
+        autoconfigure: true
+    Renrhaf\SyliusBrevoPlugin\Command\SyncContactsCommand:
+        tags:
+            - console.command
+        autowire: true
+        autoconfigure: true
+    Renrhaf\SyliusBrevoPlugin\Command\SyncCategoriesCommand:
+        tags:
+            - console.command
+        autowire: true
+        autoconfigure: true
+    Renrhaf\SyliusBrevoPlugin\Command\DiagnoseCommand:
+        tags:
+            - console.command
+        autowire: true
+        autoconfigure: true
+        arguments: ['@renrhaf_sylius_brevo.api.client']
+    Renrhaf\SyliusBrevoPlugin\Command\PurgeLogsCommand:
+        tags:
+            - console.command
+        autowire: true
+        autoconfigure: true
+        arguments: ['@doctrine.dbal.default_connection', '%renrhaf_sylius_brevo.webhook.log_retention_days%']
+    Renrhaf\SyliusBrevoPlugin\Api\BrevoClientInterface: '@renrhaf_sylius_brevo.api.client'
+    Renrhaf\SyliusBrevoPlugin\Mapper\ContactMapperInterface: '@Renrhaf\SyliusBrevoPlugin\Mapper\ContactMapper'
+    Renrhaf\SyliusBrevoPlugin\Mapper\ProductMapperInterface: '@Renrhaf\SyliusBrevoPlugin\Mapper\ProductMapper'
+    Renrhaf\SyliusBrevoPlugin\Mapper\OrderMapperInterface: '@Renrhaf\SyliusBrevoPlugin\Mapper\OrderMapper'
+    Renrhaf\SyliusBrevoPlugin\Mapper\CategoryMapperInterface: '@Renrhaf\SyliusBrevoPlugin\Mapper\CategoryMapper'
+    Renrhaf\SyliusBrevoPlugin\Service\Newsletter\NewsletterServiceInterface: '@Renrhaf\SyliusBrevoPlugin\Service\Newsletter\NewsletterService'
+    Renrhaf\SyliusBrevoPlugin\Service\Contact\ContactSyncServiceInterface: '@Renrhaf\SyliusBrevoPlugin\Service\Contact\ContactSyncService'
+    Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\ProductSyncServiceInterface: '@Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\ProductSyncService'
+    Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\OrderSyncServiceInterface: '@Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\OrderSyncService'
+    Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CategorySyncServiceInterface: '@Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CategorySyncService'
+    Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CartTrackingServiceInterface: '@Renrhaf\SyliusBrevoPlugin\Service\Ecommerce\CartTrackingService'
+    Renrhaf\SyliusBrevoPlugin\Service\Email\TransactionalEmailServiceInterface: '@Renrhaf\SyliusBrevoPlugin\Service\Email\TransactionalEmailService'
+    Renrhaf\SyliusBrevoPlugin\Service\Sms\SmsServiceInterface: '@Renrhaf\SyliusBrevoPlugin\Service\Sms\SmsService'

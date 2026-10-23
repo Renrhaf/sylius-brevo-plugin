@@ -8,7 +8,7 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
-use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
 final class RenrhafSyliusBrevoExtension extends Extension implements PrependExtensionInterface
 {
@@ -69,8 +69,8 @@ final class RenrhafSyliusBrevoExtension extends Extension implements PrependExte
         $container->setParameter('renrhaf_sylius_brevo.sms.sender', $config['sms']['sender']);
         $container->setParameter('renrhaf_sylius_brevo.sms.events', $config['sms']['events']);
 
-        $loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/../../config'));
-        $loader->load('services.xml');
+        $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../../config'));
+        $loader->load('services.yaml');
     }
 
     public function prepend(ContainerBuilder $container): void
